@@ -1,0 +1,203 @@
+/**
+ * Generates src/components/icons/icon-data.ts from react-icons.
+ *
+ * Icons are emitted as plain viewBox + element data so they can be rendered by
+ * a server component (components/Icon.tsx) as inline SVG — no client-side
+ * JavaScript for the ~40 icons on the page, and no runtime dependency on
+ * react-icons.
+ *
+ * Run with: npm run icons
+ */
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** key -> [pack, exportName] */
+const ICONS = {
+  // Programming languages
+  java: ["fa6", "FaJava"],
+  python: ["si", "SiPython"],
+  c: ["si", "SiC"],
+  // Core CS & security
+  dsa: ["lu", "LuBinary"],
+  oop: ["lu", "LuBoxes"],
+  security: ["lu", "LuShieldCheck"],
+  // Frontend
+  react: ["si", "SiReact"],
+  nextjs: ["si", "SiNextdotjs"],
+  typescript: ["si", "SiTypescript"],
+  tailwind: ["si", "SiTailwindcss"],
+  // Backend & databases
+  nodejs: ["si", "SiNodedotjs"],
+  express: ["si", "SiExpress"],
+  fastapi: ["si", "SiFastapi"],
+  postgresql: ["si", "SiPostgresql"],
+  prisma: ["si", "SiPrisma"],
+  // AI & GenAI
+  genai: ["lu", "LuSparkles"],
+  agentic: ["lu", "LuBrainCircuit"],
+  googleadk: ["si", "SiGoogle"],
+  gemini: ["si", "SiGooglegemini"],
+  openai: ["tb", "TbBrandOpenai"],
+  anthropic: ["si", "SiAnthropic"],
+  // Tools & platforms
+  git: ["si", "SiGit"],
+  vercel: ["si", "SiVercel"],
+  render: ["si", "SiRender"],
+  neon: ["si", "SiNeon"],
+  netlify: ["si", "SiNetlify"],
+  antigravity: ["lu", "LuRocket"],
+  // Social
+  github: ["si", "SiGithub"],
+  linkedin: ["fa6", "FaLinkedin"],
+  leetcode: ["si", "SiLeetcode"],
+  mail: ["lu", "LuMail"],
+  // UI
+  sun: ["lu", "LuSun"],
+  moon: ["lu", "LuMoon"],
+  menu: ["lu", "LuMenu"],
+  close: ["lu", "LuX"],
+  arrowRight: ["lu", "LuArrowRight"],
+  arrowUpRight: ["lu", "LuArrowUpRight"],
+  external: ["lu", "LuExternalLink"],
+  graduation: ["lu", "LuGraduationCap"],
+  award: ["lu", "LuAward"],
+  send: ["lu", "LuSend"],
+  loader: ["lu", "LuLoaderCircle"],
+  check: ["lu", "LuCircleCheck"],
+  alert: ["lu", "LuCircleAlert"],
+  mapPin: ["lu", "LuMapPin"],
+  code: ["lu", "LuCode"],
+};
+
+const cache = new Map();
+
+function readPack(pack) {
+  if (!cache.has(pack)) {
+    cache.set(
+      pack,
+      readFileSync(resolve(root, `node_modules/react-icons/${pack}/index.mjs`), "utf8"),
+    );
+  }
+  return cache.get(pack);
+}
+
+/** Extracts the JSON object literal passed to GenIcon for `name`. */
+function extract(pack, name) {
+  const source = readPack(pack);
+  const start = source.indexOf(`export function ${name} (props)`);
+  if (start === -1) throw new Error(`${name} not found in react-icons/${pack}`);
+
+  // Brace matching that ignores braces inside string literals, since SVG path
+  // data and attribute values can contain anything.
+  const open = source.indexOf("{", source.indexOf("GenIcon(", start));
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = open; i < source.length; i += 1) {
+    const char = source[i];
+
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+
+    if (char === '"') inString = true;
+    else if (char === "{") depth += 1;
+    else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return JSON.parse(source.slice(open, i + 1));
+    }
+  }
+
+  throw new Error(`Unbalanced GenIcon() call for ${name}`);
+}
+
+const SAFE_TAGS = new Set([
+  "path",
+  "circle",
+  "rect",
+  "line",
+  "polyline",
+  "polygon",
+  "ellipse",
+  "g",
+]);
+
+function normalise(node, key) {
+  if (!SAFE_TAGS.has(node.tag)) {
+    throw new Error(`Unsupported element <${node.tag}> — extend SAFE_TAGS if needed`);
+  }
+
+  const attr = { ...node.attr };
+  delete attr.role;
+
+  for (const [name, value] of Object.entries(attr)) {
+    if (typeof value === "string" && value.includes("url(#")) {
+      throw new Error(`<${node.tag}> references an id (${value}); not safe to inline twice`);
+    }
+    if (typeof value === "number") attr[name] = String(value);
+  }
+
+  const child = (node.child ?? []).map((c, i) => normalise(c, `${key}-${i}`));
+  return child.length ? { tag: node.tag, attr, child } : { tag: node.tag, attr };
+}
+
+const entries = Object.entries(ICONS).map(([key, [pack, name]]) => {
+  const data = extract(pack, name);
+  const attr = { ...data.attr };
+  delete attr.role;
+
+  // simple-icons / font-awesome glyphs are filled; lucide & tabler are stroked.
+  if (!attr.fill && !attr.stroke) attr.fill = "currentColor";
+
+  const children = (data.child ?? []).map((c, i) => normalise(c, `${key}-${i}`));
+  return [key, { viewBox: attr.viewBox, attr, children }];
+});
+
+const names = entries.map(([key]) => key);
+
+const banner = `// AUTO-GENERATED by scripts/generate-icons.mjs — do not edit by hand.
+// Run \`npm run icons\` to regenerate.
+
+export type IconElement = {
+  tag: string;
+  attr: Record<string, string>;
+  child?: IconElement[];
+};
+
+export type IconData = {
+  viewBox: string;
+  attr: Record<string, string>;
+  children: IconElement[];
+};
+
+${entries.map(([key, data]) => `export const ${key}: IconData = ${JSON.stringify(data, null, 2)};`).join("\n\n")}
+
+/**
+ * Named exports above are individually tree-shakeable — client components
+ * should import the specific icons they need from this module.
+ *
+ * This map is for the dynamic \`<Icon name="..." />\` helper, which is only ever
+ * used from Server Components, so it stays out of the client bundle.
+ */
+export const iconData = {
+${names.map((n) => `  ${n},`).join("\n")}
+};
+
+export const iconNames = [
+${names.map((n) => `  ${JSON.stringify(n)},`).join("\n")}
+] as const;
+
+export type IconName = keyof typeof iconData;
+`;
+
+const outDir = resolve(root, "src/components/icons");
+mkdirSync(outDir, { recursive: true });
+writeFileSync(resolve(outDir, "icon-data.ts"), banner, "utf8");
+console.log(`Wrote ${names.length} icons to src/components/icons/icon-data.ts`);
