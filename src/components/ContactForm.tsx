@@ -4,29 +4,17 @@ import { useId, useRef, useState, type FormEvent } from "react";
 import SvgIcon from "@/components/icons/SvgIcon";
 import { alert, check, loader, send } from "@/components/icons/icon-data";
 import { profile } from "@/data/site";
+import { mailtoHref, sendMessage, type ContactValues } from "@/lib/contact";
 
 /**
- * Contact form backend — FormSubmit (https://formsubmit.co).
+ * Contact form. Delivery and the choice of provider live in `src/lib/contact.ts`;
+ * this file is only the interface and its states.
  *
- * The destination is just the address, so messages go straight to
- * `profile.email` with nothing to configure. FormSubmit's AJAX endpoint
- * returns JSON instead of redirecting, which is what lets the form report
- * success and failure inline.
- *
- * One manual step, once: the *first* submission triggers a confirmation email
- * to that address. Until the link in it is clicked, submissions are not
- * delivered. Send yourself one message after deploying, click the link, and
- * every message after that arrives normally.
- *
- * Optional: after confirming, FormSubmit emails you a random string that
- * stands in for your address. Set NEXT_PUBLIC_FORMSUBMIT_TARGET to it to keep
- * the address out of the page source:
- *   NEXT_PUBLIC_FORMSUBMIT_TARGET=1a2b3c4d5e
+ * One manual step, once, for whichever provider is in use: FormSubmit requires
+ * the first submission to be confirmed by clicking a link it emails you. Until
+ * then it accepts submissions without delivering them. Web3Forms needs no
+ * confirmation.
  */
-const FORMSUBMIT_TARGET =
-  process.env.NEXT_PUBLIC_FORMSUBMIT_TARGET ?? profile.email;
-
-const ENDPOINT = `https://formsubmit.co/ajax/${FORMSUBMIT_TARGET}`;
 
 type Status = "idle" | "submitting" | "success" | "error";
 type FieldName = "name" | "email" | "message";
@@ -71,6 +59,9 @@ export default function ContactForm() {
   const uid = useId();
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<FieldErrors>({});
+  // Kept so the failure state can offer the visitor a pre-filled email — the
+  // form has already been reset by then, so the text has to be held here.
+  const [attempt, setAttempt] = useState<ContactValues | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const fieldId = (field: FieldName) => `${uid}-${field}`;
@@ -113,37 +104,24 @@ export default function ContactForm() {
     }
 
     setStatus("submitting");
+    setAttempt(values);
 
     try {
-      const response = await fetch(ENDPOINT, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          ...values,
-          // Reply goes straight back to the sender rather than to the site owner.
-          _replyto: values.email,
-          _subject: `Portfolio message from ${values.name}`,
-          _template: "table",
-          // reCAPTCHA cannot render inside a fetch request, so it is off here;
-          // the honeypot above and FormSubmit's own rate limiting stand in.
-          _captcha: "false",
-        }),
-      });
+      const result = await sendMessage(values);
 
-      if (!response.ok) throw new Error(`FormSubmit responded ${response.status}`);
-
-      // FormSubmit reports success as the *string* "true", not a boolean.
-      const result: { success?: string | boolean } = await response.json();
-      if (result.success !== "true" && result.success !== true) {
-        throw new Error("FormSubmit rejected the submission");
+      if (!result.ok) {
+        // Already logged per-provider in lib/contact.ts.
+        setStatus("error");
+        return;
       }
 
+      // Only reset on success — a failure leaves the visitor's text in place
+      // so they can retry or send it by email without retyping.
       form.reset();
+      setAttempt(null);
       setStatus("success");
-    } catch {
+    } catch (error) {
+      console.error("Contact form: unexpected failure", error);
       setStatus("error");
     }
   }
@@ -278,17 +256,40 @@ export default function ContactForm() {
         ) : null}
 
         {status === "error" ? (
-          <p role="alert" className={errorBox}>
+          <div role="alert" className={errorBox}>
             <SvgIcon data={alert} className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              Something went wrong sending your message. Please try again, or
-              email{" "}
-              <a href={`mailto:${profile.email}`} className="underline underline-offset-2">
-                {profile.email}
-              </a>
-              .
-            </span>
-          </p>
+
+            <div className="min-w-0">
+              <p>
+                Couldn&rsquo;t send your message — the form service
+                isn&rsquo;t responding. Your text is still in the form, so you
+                can try again, or send it a different way:
+              </p>
+
+              {/* Offered only here. The form has not been reset, so the
+                  visitor keeps what they typed either way. */}
+              {attempt ? (
+                <a
+                  href={mailtoHref(attempt)}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-white/25 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:border-accent hover:text-accent"
+                >
+                  <SvgIcon data={send} className="h-4 w-4" />
+                  Open it in your email app
+                </a>
+              ) : null}
+
+              <p className="mt-3 text-xs text-red-200/70">
+                Or write to{" "}
+                <a
+                  href={`mailto:${profile.email}`}
+                  className="underline underline-offset-2"
+                >
+                  {profile.email}
+                </a>{" "}
+                directly.
+              </p>
+            </div>
+          </div>
         ) : null}
       </div>
     </form>

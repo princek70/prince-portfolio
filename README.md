@@ -144,37 +144,57 @@ cp .env.example .env.local
 | Variable                          | Purpose                                                     |
 | --------------------------------- | ----------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL`            | Canonical URL — used for metadata, canonical tags, OG URLs, `sitemap.xml` and `robots.txt` |
+| `NEXT_PUBLIC_WEB3FORMS_KEY`       | Contact form access key. Strongly recommended — see below   |
 | `NEXT_PUBLIC_FORMSUBMIT_TARGET`   | Optional. Hides the contact address in the page source (see below) |
 
-Both are optional — the site builds and deploys without them.
+All are optional — the site builds and deploys without them.
 
 ### Contact form
 
-The form posts to [FormSubmit](https://formsubmit.co), which needs no account
-and no endpoint ID: the destination is simply the address, taken from
-`profile.email` in `src/data/site.ts`. Messages arrive at
-**princekanswal70@gmail.com**.
+Delivery lives in `src/lib/contact.ts`; `ContactForm.tsx` is only the interface.
+Messages arrive at **princekanswal70@gmail.com**, taken from `profile.email` in
+`src/data/site.ts`.
 
-**Do this once, after the first deploy.** FormSubmit confirms each new address
-by email. Submit the form once yourself, open the confirmation message it sends
-to that inbox, and click the link. Until you do, submissions are accepted but
-not delivered. Every message after that arrives normally.
+**Set `NEXT_PUBLIC_WEB3FORMS_KEY`.** Get a free key by entering your address at
+[web3forms.com](https://web3forms.com) — it arrives by email. It needs no server
+and no confirmation step, and it has a dashboard where you can see submissions.
 
-Two optional refinements once it is confirmed:
+That dashboard is the actual reason to prefer it. A form backend that fails
+quietly is indistinguishable from a form nobody is using, and you would only
+find out when someone mentioned it.
 
-- FormSubmit emails you a random string that stands in for your address. Set
-  `NEXT_PUBLIC_FORMSUBMIT_TARGET` to it and the address disappears from the page
-  source. Until then it is visible in the markup — which is fine here, since the
-  contact section already shows it.
-- Submissions are rate limited (roughly 10–20 per hour on the free tier), and
-  the form carries an off-screen honeypot field that quietly discards bots.
+**Why there are two providers.** FormSubmit is used when no Web3Forms key is
+set, and as the fallback when one is. They are tried in order, so a provider
+being down costs a retry rather than the message.
 
-There are no secrets involved — every value is public by design — but
-`.env.local` is gitignored regardless.
+FormSubmit was the original choice because it needs no account: the destination
+is just the address. It was demoted after its API returned HTTP 500 to every
+request for an extended period — including for addresses that had never been
+used — while its homepage kept answering `200`. Every uptime checker polls the
+homepage, so nothing reported an outage, and the site had no way to tell a
+broken backend from a working one.
 
-*Switched from Formspree deliberately: Formspree retired the email-in-the-URL
-form of its endpoints, so it now requires an account and a generated form ID.
-FormSubmit accepts the address directly.*
+**What happens when every provider fails.** The visitor gets an explanation, a
+button that opens their message pre-filled in their own mail client, and the
+address in plain text. The form is not reset on failure, so nothing they typed
+is lost. There are three routes because the fallback should not itself be a
+single point of failure.
+
+**FormSubmit's one manual step.** It confirms each new address by email: submit
+the form once, open the confirmation message, click the link. Until then it
+accepts submissions without delivering them. This applies only when FormSubmit
+is actually in use — Web3Forms needs no confirmation.
+
+Two smaller notes:
+
+- Submissions are rate limited by both providers (roughly 10–20 per hour on
+  FormSubmit's free tier), and the form carries an off-screen honeypot that
+  quietly reports success to bots without sending anything.
+- Failures are logged to the console per provider, so "the service is down" and
+  "the network dropped" are distinguishable after the fact.
+
+There are no secrets involved — `NEXT_PUBLIC_*` values are compiled into the
+page by definition — but `.env.local` is gitignored regardless.
 
 ---
 
