@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Working files: the raw screenshots dropped in the repo root before they were
+# cropped into public/projects/, plus the design reference they were matched
+# against. That reference is a third-party template's asset and must not be
+# redistributed, so it stays out of the repository.
+/Untitled*.jpg
+/_m.mjs

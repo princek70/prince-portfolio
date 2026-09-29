@@ -9,15 +9,19 @@ type SectionProps = {
 /**
  * Consistent section shell: shared horizontal padding, vertical rhythm and
  * max-width container, so every section lines up on the same grid.
+ *
+ * The vertical rhythm is deliberately generous — the glass panels need air
+ * around them, and the ambient wash reads better between blocks than behind
+ * them.
  */
 export default function Section({ id, children, className = "" }: SectionProps) {
   return (
     <section
       id={id}
       aria-labelledby={`${id}-heading`}
-      className={`scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28 ${className}`}
+      className={`scroll-mt-32 px-5 py-24 sm:px-8 sm:py-32 ${className}`}
     >
-      <div className="mx-auto w-full max-w-5xl">{children}</div>
+      <div className="mx-auto w-full max-w-6xl">{children}</div>
     </section>
   );
 }

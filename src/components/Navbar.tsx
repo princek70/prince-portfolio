@@ -6,7 +6,12 @@ import { close as closeIcon, menu as menuIcon } from "@/components/icons/icon-da
 import { navItems, profile } from "@/data/site";
 
 /**
- * Sticky top navigation for the single-page layout.
+ * Top navigation.
+ *
+ * A full-width glass bar rather than a floating pill: the reference keeps the
+ * bar edge-to-edge with a hairline under it, and the frosted treatment still
+ * lets content pass behind. Links are uppercase and underlined when active,
+ * matching the reference's treatment.
  *
  * Anchor links are plain <a href="#..."> so the browser handles the jump and
  * CSS `scroll-behavior: smooth` handles the animation — which means the
@@ -18,7 +23,6 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
-  // Scroll spy + elevation, batched into one animation frame per scroll.
   useEffect(() => {
     const sections = navItems
       .map((item) => document.getElementById(item.href.slice(1)))
@@ -37,7 +41,6 @@ export default function Navbar() {
       if (atBottom) {
         setActive(`#${sections[sections.length - 1].id}`);
       } else {
-        // The active section is the last one whose top has passed the navbar.
         const threshold = window.scrollY + 120;
         let current = sections[0].id;
         for (const section of sections) {
@@ -66,7 +69,6 @@ export default function Navbar() {
     };
   }, []);
 
-  // Escape closes the mobile menu and returns focus to the toggle.
   useEffect(() => {
     if (!open) return;
 
@@ -84,29 +86,29 @@ export default function Navbar() {
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-40 border-b bg-canvas transition-colors duration-200 ${
-        scrolled || open ? "border-line" : "border-transparent"
+      className={`fixed inset-x-0 top-0 z-40 border-b transition-colors duration-300 ${
+        scrolled || open
+          ? "border-line bg-canvas/80 backdrop-blur-xl"
+          : // Floating over the hero, which is dark in both themes — so the
+            // bar takes the dark text tokens rather than the page's.
+            "on-dark border-transparent bg-transparent"
       }`}
     >
       <nav
         aria-label="Main"
-        className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-5 sm:px-8"
+        className="mx-auto flex h-18 w-full max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8"
       >
+        {/* Wordmark: name plus the reference's signature accent dot. */}
         <a
           href="#home"
           onClick={close}
-          className="flex items-center gap-2.5 rounded-md font-semibold tracking-tight"
+          className="flex shrink-0 items-center gap-1.5 rounded-md text-lg font-semibold tracking-tight whitespace-nowrap"
         >
-          <span
-            aria-hidden="true"
-            className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-xs font-bold text-accent-ink"
-          >
-            {profile.initials}
-          </span>
-          <span className="text-sm sm:text-base">{profile.name}</span>
+          {profile.name}
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-accent" />
         </a>
 
-        <ul className="hidden items-center gap-1 md:flex">
+        <ul className="hidden items-center gap-7 lg:flex">
           {navItems.map((item) => {
             const isActive = active === item.href;
             return (
@@ -114,60 +116,74 @@ export default function Navbar() {
                 <a
                   href={item.href}
                   aria-current={isActive ? "true" : undefined}
-                  className={`relative block rounded-md px-3 py-2 text-sm transition-colors duration-200 ${
-                    isActive ? "text-ink" : "text-muted hover:text-ink"
+                  className={`relative block py-1.5 text-xs font-medium tracking-[0.14em] uppercase transition-colors duration-200 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-0.5 after:origin-left after:rounded-full after:bg-ink after:transition-transform after:duration-300 ${
+                    isActive
+                      ? "text-ink after:scale-x-100"
+                      : "text-muted after:scale-x-0 hover:text-ink hover:after:scale-x-100"
                   }`}
                 >
                   {item.label}
-                  <span
-                    aria-hidden="true"
-                    className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-accent transition-opacity duration-200 ${
-                      isActive ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
                 </a>
               </li>
             );
           })}
         </ul>
 
-        <button
-          ref={toggleRef}
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
-          className="grid h-10 w-10 place-items-center rounded-lg border border-line text-ink transition-colors duration-200 hover:border-accent hover:text-accent md:hidden"
-        >
-          <SvgIcon data={open ? closeIcon : menuIcon} className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="#contact"
+            onClick={close}
+            className="hidden rounded-lg bg-brand px-5 py-2.5 text-sm font-medium whitespace-nowrap text-brand-ink transition-transform duration-200 hover:-translate-y-0.5 lg:inline-flex"
+          >
+            Contact Me
+          </a>
+
+          <button
+            ref={toggleRef}
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line text-ink transition-colors duration-200 hover:border-accent lg:hidden"
+          >
+            <SvgIcon data={open ? closeIcon : menuIcon} className="h-5 w-5" />
+          </button>
+        </div>
       </nav>
 
-      {/* Always rendered on mobile, toggled with hidden — keeps it out of the
-          desktop layout and out of the accessibility tree when closed. */}
       <div
         id="mobile-nav"
         hidden={!open}
-        className="border-t border-line bg-canvas md:hidden"
+        className="border-t border-line bg-canvas/95 backdrop-blur-xl lg:hidden"
       >
-        <ul className="mx-auto flex w-full max-w-5xl flex-col px-5 py-3 sm:px-8">
+        <ul className="mx-auto flex w-full max-w-6xl flex-col px-5 py-3 sm:px-8">
           {navItems.map((item) => (
             <li key={item.href}>
               <a
                 href={item.href}
                 onClick={close}
                 aria-current={active === item.href ? "true" : undefined}
-                className={`block rounded-md px-3 py-3 text-base transition-colors duration-200 ${
+                className={`block rounded-lg px-3 py-3 text-sm font-medium tracking-[0.12em] uppercase transition-colors duration-200 ${
                   active === item.href
                     ? "bg-accent-soft text-ink"
-                    : "text-muted hover:bg-accent-soft hover:text-ink"
+                    : "text-muted hover:bg-accent-soft/60 hover:text-ink"
                 }`}
               >
                 {item.label}
               </a>
             </li>
           ))}
+
+          <li className="px-1 pt-2 pb-1">
+            <a
+              href="#contact"
+              onClick={close}
+              className="block rounded-lg bg-brand px-5 py-3 text-center text-sm font-medium text-brand-ink"
+            >
+              Contact Me
+            </a>
+          </li>
         </ul>
       </div>
     </header>

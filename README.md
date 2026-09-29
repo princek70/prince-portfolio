@@ -47,26 +47,86 @@ export const LEETCODE_URL: string | null = "https://leetcode.com/u/Princek70/";
 It appears in the contact section and the footer. Setting it to `null` removes
 the entry from both at once.
 
-**Profile photo.** The site ships a monogram placeholder — deliberately not a
-photo, and not a generated likeness. To use a real one:
+**Profile photo.** Two files, and the distinction matters:
 
-1. Save a square image to `public/` (e.g. `public/profile.jpg`, ~800×800)
-2. In `src/components/ProfileAvatar.tsx` set `src: "/profile.jpg"` and
-   `placeholder: false`
+| File | Role |
+| --- | --- |
+| `public/profile.jpg` | The untouched original studio shot. Not referenced by any component. |
+| `public/profile.png` | What the site actually renders: the backdrop keyed out, cropped above the waist. Generated. |
 
-`next/image` then optimises it. The placeholder SVG doesn't go through the
-optimiser, which is why the flag exists.
+To use a different photo, overwrite `public/profile.jpg` and run `npm run
+portrait`. The script crops and keys the backdrop, then writes `profile.png`.
+It expects the same setup — a plain, evenly lit backdrop that contrasts with
+the subject — and prints how much it removed, so you can tell at a glance
+whether the key worked. If your photo is framed differently, adjust `CROP` at
+the top of `scripts/make-portrait.mjs`; it errors out if the crop does not fit
+the source rather than producing a silently wrong image.
 
-**Project screenshots.** There are none yet, so each card composes its own
-visual from the project icon, a faint grid and an accent glow. To add a real
-screenshot, set `image` on a project in `src/data/site.ts`:
+Already have a cut-out on a transparent background? Skip the script: save it
+as `public/profile.png` directly and update `width`/`height` in
+`src/components/ProfileAvatar.tsx` to its real dimensions.
+
+**Resolution.** The current original is 570×1000, which the hero displays at up
+to 461px wide — so on a 2× display it is being stretched to roughly 1.6× its
+real pixels and reads slightly soft. A larger original fixes it and nothing
+else has to change: `next/image` never upscales, so it serves whatever the
+source supports. Somewhere around 1400px wide is plenty. Crop `CROP` in
+`scripts/make-portrait.mjs` will need its numbers scaled to the new source.
+
+Nothing is cropped at render time. It is displayed at up to 461px wide, and
+`next/image` serves roughly 30KB of WebP for it. The `sizes` prop in
+`src/components/ProfileAvatar.tsx` mirrors the Hero's own widths — if you change
+how wide the figure renders, change `sizes` too, or the browser will pick a
+source that is too small.
+
+**How the portrait sits on the page.** The hero is a split screen: a near-black
+field with a solid lime block down the right, and the cut-out figure standing on
+the seam between them, anchored to the bottom edge. Three things keep that
+working:
+
+- The image is a cut-out on transparency, so nothing is masked at render time —
+  the flat waist crop simply meets the bottom of the section. A figure cropped
+  anywhere else will show its cut edge as a hard line.
+- The lime block starts just below the navbar rather than at the top of the
+  page. White is the only colour that reads on the black half and near-black the
+  only one that reads on lime, so a nav spanning both cannot stay legible at
+  every width; giving the bar its own black band settles it. The block is sized
+  as a share of the viewport, not of the content column, so the split lands in
+  the same place at every width.
+- The figure is anchored to the content column's bottom-right, so it reaches
+  back across the seam into the black by a fixed proportion rather than drifting
+  as the window widens.
+
+**Project screenshots.** `public/projects/` holds the three screenshots, cropped
+to 16:9 at 2000×1125:
+
+| File | Project |
+| --- | --- |
+| `architectai.jpg` | ArchitectAI |
+| `delizioso.jpg` | Delizioso |
+| `ambient-expense-agent.jpg` | Ambient Expense Agent |
+
+The card frame is `aspect-16/9`, so the images fill it exactly and nothing is
+cropped at any breakpoint. To swap one, overwrite the file keeping the name, or
+point `image` in `src/data/site.ts` at a new one:
 
 ```ts
 { name: "Delizioso", /* … */ image: "/projects/delizioso.png" }
 ```
 
-The decorative panel is replaced by the image and nothing else about the card
-changes.
+The details sit in a dark glass panel *below* the image rather than over it —
+these are full-page screenshots, and an overlay covered the part worth seeing.
+That panel is always dark with white text, so light and dark images both work.
+
+**Wallpaper.** Off by default — the background is a gradient wash. To put an
+image behind the whole page, set `wallpaper` in `src/data/site.ts`:
+
+```ts
+export const wallpaper = { src: "/wallpaper.jpg", opacity: 0.35 };
+```
+
+`public/wallpaper-placeholder.svg` previews the slot before you have a file.
+A dimming tint is applied on top, so text contrast does not depend on the image.
 
 **Ambient Expense Agent** has no public deployment, so its `live` field is
 absent and the card renders only a GitHub button. There is no placeholder URL.
@@ -131,6 +191,14 @@ To follow the operating system instead, change the fallback in
 
 Colour tokens are defined once in `src/app/globals.css` for both themes, so
 contrast can be checked in a single place.
+
+Two scopes opt out of the toggle and stay dark in both themes: `.section-dark`,
+for a whole block (the contact panel), and `.on-dark`, which overrides only the
+text tokens so it can be layered onto a transparent element — that is how the
+navbar stays legible while floating over the hero. Both work by re-declaring the
+`--ink` / `--line` / `--brand` custom properties, because the Tailwind theme is
+defined with `@theme inline` and every colour utility resolves through those
+variables rather than a literal.
 
 ---
 

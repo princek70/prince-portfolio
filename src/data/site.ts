@@ -32,6 +32,20 @@ export const profile = {
   email: "princekanswal70@gmail.com",
 } as const;
 
+/**
+ * Optional full-page wallpaper behind everything.
+ *
+ * `null` gives the plain gradient wash (the default look). To use an image:
+ *
+ *   1. Drop the file in /public — e.g. /public/wallpaper.jpg
+ *   2. Set this to { src: "/wallpaper.jpg", opacity: 0.35 }
+ *
+ * A dimming tint is applied over whatever you set, so a bright image will not
+ * wash out the text in front of it. /public/wallpaper-placeholder.svg is there
+ * to preview the slot before you have a file of your own.
+ */
+export const wallpaper: { src: string; opacity: number } | null = null;
+
 export const navItems = [
   { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
@@ -170,6 +184,7 @@ export const projects: Project[] = [
     github: "https://github.com/princek70/project-res",
     live: "https://project-res.onrender.com",
     icon: "react",
+    image: "/projects/delizioso.jpg",
   },
   {
     name: "ArchitectAI",
@@ -181,6 +196,7 @@ export const projects: Project[] = [
     github: "https://github.com/princek70/ArchitectAI",
     live: "https://architect-ai-sand.vercel.app/builder",
     icon: "nextjs",
+    image: "/projects/architectai.jpg",
   },
   {
     name: "Ambient Expense Agent",
@@ -192,6 +208,7 @@ export const projects: Project[] = [
     github: "https://github.com/princek70/ambient-expense-agent",
     // No public deployment for this project — the Live Demo button is omitted.
     icon: "agentic",
+    image: "/projects/ambient-expense-agent.jpg",
   },
 ];
 

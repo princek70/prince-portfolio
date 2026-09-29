@@ -53,7 +53,19 @@ function validate(values: Record<FieldName, string>): FieldErrors {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink transition-colors duration-200 placeholder:text-muted focus:border-accent";
+  "w-full rounded-xl border border-line bg-surface/70 px-4 py-3 text-sm text-ink transition-colors duration-200 placeholder:text-muted focus:border-accent";
+
+/**
+ * Status colours are the light-on-dark variants in both themes. The form only
+ * ever renders inside the dark contact panel (see `.section-dark` in
+ * globals.css), so a `dark:` variant would never fire on the light theme and
+ * the darker shades would sit at roughly 4:1 against that panel.
+ */
+const errorText = "mt-2 text-xs text-red-300";
+const errorBox =
+  "flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200";
+const successBox =
+  "flex items-start gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200";
 
 export default function ContactForm() {
   const uid = useId();
@@ -144,7 +156,7 @@ export default function ContactForm() {
       // announced consistently; the `required` attributes still mark the fields
       // as required for assistive technology.
       noValidate
-      className="rounded-2xl border border-line bg-surface p-6 shadow-card sm:p-7"
+      className="glass rounded-3xl p-6 sm:p-8"
     >
       <div className="grid gap-5">
         <div>
@@ -165,7 +177,7 @@ export default function ContactForm() {
             className={`mt-2 ${inputClass} ${errors.name ? "border-red-500/70" : ""}`}
           />
           {errors.name ? (
-            <p id={errorId("name")} className="mt-2 text-xs text-red-600 dark:text-red-400">
+            <p id={errorId("name")} className={errorText}>
               {errors.name}
             </p>
           ) : null}
@@ -190,7 +202,7 @@ export default function ContactForm() {
             className={`mt-2 ${inputClass} ${errors.email ? "border-red-500/70" : ""}`}
           />
           {errors.email ? (
-            <p id={errorId("email")} className="mt-2 text-xs text-red-600 dark:text-red-400">
+            <p id={errorId("email")} className={errorText}>
               {errors.email}
             </p>
           ) : null}
@@ -213,10 +225,7 @@ export default function ContactForm() {
             className={`mt-2 resize-y ${inputClass} ${errors.message ? "border-red-500/70" : ""}`}
           />
           {errors.message ? (
-            <p
-              id={errorId("message")}
-              className="mt-2 text-xs text-red-600 dark:text-red-400"
-            >
+            <p id={errorId("message")} className={errorText}>
               {errors.message}
             </p>
           ) : null}
@@ -262,20 +271,14 @@ export default function ContactForm() {
         </p>
 
         {status === "success" ? (
-          <p
-            role="status"
-            className="flex items-start gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-300"
-          >
+          <p role="status" className={successBox}>
             <SvgIcon data={check} className="mt-0.5 h-4 w-4 shrink-0" />
             Thanks — your message is on its way. I&rsquo;ll get back to you soon.
           </p>
         ) : null}
 
         {status === "error" ? (
-          <p
-            role="alert"
-            className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300"
-          >
+          <p role="alert" className={errorBox}>
             <SvgIcon data={alert} className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               Something went wrong sending your message. Please try again, or

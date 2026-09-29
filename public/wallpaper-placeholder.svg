@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WALLPAPER PLACEHOLDER — this is a stand-in, not artwork.
+
+  To use it, set `wallpaper` in src/data/site.ts to:
+      { src: "/wallpaper-placeholder.svg", opacity: 0.5 }
+
+  To use your own image instead, drop the file into this folder (/public) and
+  point `src` at it — e.g. { src: "/wallpaper.jpg", opacity: 0.35 }.
+
+  Suggested size: 1920x1080 or larger. It sits behind the whole page and is
+  covered by a dimming tint, so a busy image will still read as background.
+  Recommended content: something dark and low-contrast, since every text panel
+  on the site sits on top of it.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-label="Wallpaper placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="55%" stop-color="#111611"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+
+    <radialGradient id="glowA" cx="0.18" cy="0.22" r="0.55">
+      <stop offset="0%" stop-color="#c3f53c" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#c3f53c" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="glowB" cx="0.85" cy="0.78" r="0.5">
+      <stop offset="0%" stop-color="#7fd14a" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#7fd14a" stop-opacity="0"/>
+    </radialGradient>
+
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0V80" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <rect width="1920" height="1080" fill="url(#glowA)"/>
+  <rect width="1920" height="1080" fill="url(#glowB)"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+
+  <g fill="none" stroke="#c3f53c" stroke-opacity="0.35" stroke-width="3" stroke-dasharray="18 14">
+    <rect x="120" y="120" width="1680" height="840" rx="28"/>
+  </g>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" text-anchor="middle">
+    <text x="960" y="520" fill="#ffffff" fill-opacity="0.62" font-size="46" letter-spacing="14">WALLPAPER PLACEHOLDER</text>
+    <text x="960" y="580" fill="#c3f53c" fill-opacity="0.85" font-size="24" letter-spacing="6">REPLACE WITH YOUR OWN IMAGE</text>
+    <text x="960" y="646" fill="#ffffff" fill-opacity="0.34" font-size="20" letter-spacing="3">set `wallpaper` in src/data/site.ts to your file in /public</text>
+  </g>
+</svg>

@@ -4,38 +4,78 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Design tokens. Dark is the primary experience; light is a full peer.
-   Every colour is defined here for both themes so contrast is verifiable.
+   Design tokens.
+
+   Palette follows the reference the brief was built from: near-black, white,
+   and a single lime accent, with a butter/cream tone for highlights.
+
+   One rule keeps this accessible across both themes. Lime is a very bright
+   hue, so it carries text only when the text on it is near-black, and it is
+   used as a *fill* — never as small text on a light background, where it would
+   fall far below AA. That is why the primary button colour is its own token:
+   black on light sections, lime on dark ones, exactly as the reference does.
    --------------------------------------------------------------------------- */
 :root {
   --canvas: #ffffff;
   --surface: #ffffff;
-  --surface-sunken: #f6f7f9;
-  --line: #e5e7ee;
-  --line-strong: #d3d7e0;
-  --ink: #0e1014;
-  --muted: #5a6373;
-  --accent: #4f46e5;
-  --accent-ink: #ffffff;
-  --accent-soft: #eef0ff;
-  --shadow-card: 0 1px 2px rgb(14 16 20 / 0.04), 0 8px 24px -12px rgb(14 16 20 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(14 16 20 / 0.05), 0 18px 40px -16px rgb(14 16 20 / 0.18);
+  --surface-sunken: #f6f6f3;
+  --line: #e5e5e0;
+  --line-strong: #cfcfc8;
+  --ink: #0a0a0a;
+  --muted: #646b78;
+
+  --accent: #92ff04;
+  --accent-ink: #0a0a0a;
+  --accent-soft: #e8ffcc;
+  --cream: #fdeeb7;
+
+  /* Primary action. Not `--accent`: on a light page the reference uses solid
+     black buttons and keeps lime for decoration. */
+  --brand: #0a0a0a;
+  --brand-ink: #ffffff;
+
+  --ambient-1: rgb(146 255 4 / 0.24);
+  --ambient-2: rgb(90 200 30 / 0.14);
+  --ambient-3: rgb(242 238 201 / 0.5);
+
+  --glass-bg: rgb(255 255 255 / 0.72);
+  --glass-border: rgb(10 10 10 / 0.08);
+  --glass-highlight: rgb(255 255 255 / 0.9);
+  --glass-shadow: 0 1px 2px rgb(10 10 10 / 0.03), 0 12px 40px -16px rgb(10 10 10 / 0.16);
+
+  --shadow-card: 0 1px 2px rgb(10 10 10 / 0.04), 0 8px 24px -12px rgb(10 10 10 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(10 10 10 / 0.05), 0 24px 56px -20px rgb(10 10 10 / 0.22);
   color-scheme: light;
 }
 
 .dark {
-  --canvas: #0a0b0e;
-  --surface: #101218;
-  --surface-sunken: #0d0f14;
-  --line: #232733;
-  --line-strong: #333849;
-  --ink: #e9eaef;
-  --muted: #9aa2b4;
-  --accent: #818cf8;
-  --accent-ink: #0b0c11;
-  --accent-soft: #171a2b;
+  --canvas: #0a0a0a;
+  --surface: #121212;
+  --surface-sunken: #0d0d0d;
+  --line: #262626;
+  --line-strong: #3d3d3d;
+  --ink: #ffffff;
+  --muted: #a1a1a1;
+
+  --accent: #92ff04;
+  --accent-ink: #0a0a0a;
+  --accent-soft: #16240a;
+  --cream: #fdeeb7;
+
+  --brand: #92ff04;
+  --brand-ink: #0a0a0a;
+
+  --ambient-1: rgb(146 255 4 / 0.15);
+  --ambient-2: rgb(80 170 30 / 0.11);
+  --ambient-3: rgb(146 255 4 / 0.07);
+
+  --glass-bg: rgb(22 22 22 / 0.6);
+  --glass-border: rgb(255 255 255 / 0.09);
+  --glass-highlight: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 48px -20px rgb(0 0 0 / 0.8);
+
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
-  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 18px 40px -16px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 28px 64px -24px rgb(0 0 0 / 0.9);
   color-scheme: dark;
 }
 
@@ -50,6 +90,9 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-cream: var(--cream);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
@@ -61,8 +104,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    /* Keeps anchor targets clear of the fixed navbar. */
-    scroll-padding-top: 5.5rem;
+    scroll-padding-top: 6rem;
     -webkit-text-size-adjust: 100%;
   }
 
@@ -73,11 +115,16 @@
     transition: background-color 250ms ease, color 250ms ease;
   }
 
-  /* Visible keyboard focus everywhere, without affecting mouse users. */
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: 0.35rem;
+  }
+
+  /* On a light page the lime ring would be near-invisible against white, so
+     focus falls back to the ink colour there. */
+  :root:not(.dark) :focus-visible {
+    outline-color: var(--ink);
   }
 
   ::selection {
@@ -87,11 +134,157 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Eyebrow label — the small uppercase, widely-tracked line above a heading.
+   --------------------------------------------------------------------------- */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Ambient background. Translucent panels only read as glass if there is
+   colour behind them to refract. Radial gradients rather than blurred
+   elements: a gradient rasterises once, where `filter: blur()` on a large
+   fixed layer is re-composited on every scroll frame.
+   --------------------------------------------------------------------------- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ambient__blob {
+  position: absolute;
+  border-radius: 9999px;
+}
+
+.ambient__blob--1 {
+  top: -26rem;
+  right: -14rem;
+  width: 54rem;
+  height: 54rem;
+  background: radial-gradient(circle, var(--ambient-1) 0%, transparent 68%);
+}
+
+.ambient__blob--2 {
+  top: 26%;
+  left: -22rem;
+  width: 46rem;
+  height: 46rem;
+  background: radial-gradient(circle, var(--ambient-2) 0%, transparent 68%);
+}
+
+.ambient__blob--3 {
+  bottom: -28rem;
+  right: 12%;
+  width: 52rem;
+  height: 52rem;
+  background: radial-gradient(circle, var(--ambient-3) 0%, transparent 70%);
+}
+
+.ambient__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------------------------------------------------------------------------
+   Glass surface. One class so blur radius, border and inner highlight stay
+   consistent. The inset highlight along the top edge is what makes a panel
+   read as a physical pane catching light.
+   --------------------------------------------------------------------------- */
+.glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+}
+
+.glass--soft {
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+/* Darker, heavier glass for overlays that sit on top of imagery, where the
+   background can be any brightness. Text on these is always white. */
+.glass--overlay {
+  background-color: rgb(12 12 12 / 0.62);
+  border-color: rgb(255 255 255 / 0.14);
+  box-shadow: 0 24px 64px -24px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.1);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background-color: var(--surface);
+  }
+
+  .glass--overlay {
+    background-color: rgb(12 12 12 / 0.92);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Dark section scope.
+
+   The contact block is dark in *both* themes, the way the reference alternates
+   a black block into a white page. Re-declaring the tokens here re-themes the
+   whole subtree, because every utility resolves through `var(--ink)` and
+   friends rather than a literal colour — so `text-ink`, `border-line` and the
+   glass panels all follow automatically.
+
+   `color-scheme: dark` is part of the job, not a detail: without it the native
+   form controls inside stay light and the inputs glare out of the panel.
+   --------------------------------------------------------------------------- */
+.section-dark,
+.on-dark {
+  --canvas: #0a0a0a;
+  --surface: #141414;
+  --surface-sunken: #0d0d0d;
+  --line: #2a2a2a;
+  --line-strong: #3d3d3d;
+  --ink: #ffffff;
+  --muted: #a1a1a1;
+
+  --accent-soft: #16240a;
+  --brand: #92ff04;
+  --brand-ink: #0a0a0a;
+
+  --glass-bg: rgb(22 22 22 / 0.6);
+  --glass-border: rgb(255 255 255 / 0.09);
+  --glass-highlight: rgb(255 255 255 / 0.06);
+  --glass-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 48px -20px rgb(0 0 0 / 0.8);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 28px 64px -24px rgb(0 0 0 / 0.9);
+
+  color-scheme: dark;
+}
+
+.section-dark {
+  background-color: var(--canvas);
+  color: var(--ink);
+}
+
+/* For an element with no background of its own that happens to sit over dark
+   content — the navbar while it floats above the hero. Same tokens, so its
+   text and hairlines stay light even when the page is on the light theme. */
+.on-dark {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------------
    Section reveal — driven by IntersectionObserver in components/Reveal.tsx.
    --------------------------------------------------------------------------- */
 .reveal {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(16px);
   transition:
     opacity 600ms cubic-bezier(0.22, 0.61, 0.36, 1),
     transform 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -111,8 +304,27 @@
   background-size: 44px 44px;
 }
 
+/* Blinking caret for the hero's typing line. */
+@keyframes caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.caret {
+  animation: caret 1.1s step-end infinite;
+}
+
 /* ---------------------------------------------------------------------------
-   Reduced motion: drop non-essential movement, keep navigation usable.
+   Accessibility overrides.
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -132,5 +344,21 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass--overlay {
+    background-color: rgb(12 12 12 / 0.95);
+  }
+
+  .ambient {
+    opacity: 0.4;
   }
 }

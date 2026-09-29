@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "portrait": "node scripts/make-portrait.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

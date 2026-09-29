@@ -1,40 +1,41 @@
 import Image from "next/image";
 
 /**
- * Profile image.
+ * Profile photo — a cut-out, waist-up portrait on a transparent background.
  *
- * The site currently ships a monogram placeholder — not a photo, and not a
- * generated likeness of a real person.
+ * public/profile.png is generated from the original studio shot: the flat grey
+ * backdrop is keyed out and the frame cropped above the waist. The source of
+ * truth is public/profile.jpg, which is kept so the cut-out can be regenerated.
  *
- * To use a real photo:
- *   1. Save it to /public (e.g. /public/profile.jpg — square, ~800×800)
- *   2. Point `src` at it and set `placeholder: false`
- * The image then goes through next/image optimisation automatically.
+ * The image is deliberately bare: no frame, no background of its own. The Hero
+ * paints the lime block behind it and anchors the bottom edge to the bottom of
+ * the section, so the flat waist crop reads as the section's edge rather than
+ * as a cut. Move the figure off that bottom edge and the crop becomes visible.
+ *
+ * `sizes` mirrors how the Hero actually sizes it — a share of the content
+ * column above 1024px, a share of the viewport below that. If the Hero's
+ * widths change, change these to match, or the browser picks a source that is
+ * too small and the portrait renders soft.
  */
 const PROFILE = {
-  src: "/avatar-placeholder.svg",
-  placeholder: true,
-  alt: "Portrait placeholder for Prince Kanswal",
+  src: "/profile.png",
+  alt: "Prince Kanswal",
+  width: 570,
+  height: 780,
 };
 
 export default function ProfileAvatar() {
   return (
-    <div className="relative rounded-3xl border border-line bg-surface p-2 shadow-card">
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-sunken">
-        <Image
-          src={PROFILE.src}
-          alt={PROFILE.alt}
-          width={640}
-          height={640}
-          sizes="(min-width: 1024px) 420px, (min-width: 640px) 360px, 80vw"
-          // This is the largest above-the-fold image, so it is preloaded
-          // (the Next 16 replacement for the deprecated `priority` prop).
-          preload
-          // SVGs bypass the optimiser; a real photo will be optimised.
-          unoptimized={PROFILE.placeholder}
-          className="h-full w-full object-cover"
-        />
-      </div>
-    </div>
+    <Image
+      src={PROFILE.src}
+      alt={PROFILE.alt}
+      width={PROFILE.width}
+      height={PROFILE.height}
+      sizes="(min-width: 1440px) 461px, (min-width: 1024px) 40vw, (min-width: 640px) 44vw, 56vw"
+      // Largest above-the-fold image, so it is preloaded — the Next 16
+      // replacement for the deprecated `priority` prop.
+      preload
+      className="relative block h-auto w-full"
+    />
   );
 }

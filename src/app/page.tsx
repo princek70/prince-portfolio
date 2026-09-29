@@ -1,10 +1,12 @@
 import About from "@/components/About";
+import AmbientBackground from "@/components/AmbientBackground";
 import Contact from "@/components/Contact";
 import Education from "@/components/Education";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import Navbar from "@/components/Navbar";
 import Projects from "@/components/Projects";
+import ScrollToTop from "@/components/ScrollToTop";
 import Skills from "@/components/Skills";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SITE_URL, profile, socialLinks } from "@/data/site";
@@ -32,10 +34,15 @@ const personSchema = {
 export default function Home() {
   return (
     <>
+      {/* Decorative wash. Sits at z-0; everything readable is raised above it
+          so the translucent panels have colour to refract. */}
+      <AmbientBackground />
+
       <Navbar />
       <ThemeToggle />
+      <ScrollToTop />
 
-      <main className="flex-1">
+      <main className="relative z-10 flex-1">
         <Hero />
         <About />
         <Skills />
