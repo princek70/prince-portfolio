@@ -229,10 +229,11 @@ To add an icon, add it to the `ICONS` map in the generator and run
 
 ## Deployment
 
-1. Push to GitHub
-2. Import the repo at [vercel.com/new](https://vercel.com/new)
-3. Add the environment variables from `.env.example`
-4. Deploy
+The repository is [princek70/prince-portfolio](https://github.com/princek70/prince-portfolio).
+
+1. Import the repo at [vercel.com/new](https://vercel.com/new)
+2. Add the environment variables from `.env.example`
+3. Deploy
 
 No `vercel.json` is needed. Every route — including `robots.txt`,
 `sitemap.xml`, the favicon and the Open Graph image — is prerendered as static
